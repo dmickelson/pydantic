@@ -3,6 +3,25 @@ import hashlib
 import re
 from typing import Any
 
+"""
+Key expansions and improvements in example_2.py:
+
+1. More complex Role enum: It now uses explicit values and includes a SuperAdmin role.
+
+2. Enhanced input validation:
+- Regular expressions for password and name validation.
+- Field-level validators using @field_validator decorator.
+- Model-level validator using @model_validator decorator.
+
+3. More robust role validation: The role validator can handle int, str, or Role inputs.
+4. Password hashing: The password is hashed using SHA-256 before storage.
+5. Expanded error handling: More specific error messages for different validation failures.
+6. Comprehensive test cases: The main function includes various test cases to demonstrate different validation scenarios.
+
+These enhancements make example_2.py a more robust and feature-rich implementation compared to example.py, showcasing advanced Pydantic features and best practices for data validation and security.
+"""
+
+
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -13,8 +32,12 @@ from pydantic import (
     ValidationError,
 )
 
+# Regular expressions for input validation
+
 VALID_PASSWORD_REGEX = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 VALID_NAME_REGEX = re.compile(r"^[a-zA-Z]{2,}$")
+
+# Enhanced Role enum using IntFlag
 
 
 class Role(enum.IntFlag):
@@ -22,6 +45,8 @@ class Role(enum.IntFlag):
     Editor = 2
     Admin = 4
     SuperAdmin = 8
+
+# Enhanced User model with additional validations
 
 
 class User(BaseModel):
@@ -38,6 +63,7 @@ class User(BaseModel):
         default=None, description="The role of the user", examples=[1, 2, 4, 8]
     )
 
+    # Field-level validator for name
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
@@ -47,10 +73,12 @@ class User(BaseModel):
             )
         return v
 
+    # Field-level validator for role
     @field_validator("role", mode="before")
     @classmethod
     def validate_role(cls, v: int | str | Role) -> Role:
-        op = {int: lambda x: Role(x), str: lambda x: Role[x], Role: lambda x: x}
+        op = {int: lambda x: Role(
+            x), str: lambda x: Role[x], Role: lambda x: x}
         try:
             return op[type(v)](v)
         except (KeyError, ValueError):
@@ -58,6 +86,7 @@ class User(BaseModel):
                 f'Role is invalid, please use one of the following: {", ".join([x.name for x in Role])}'
             )
 
+    # Model-level validator
     @model_validator(mode="before")
     @classmethod
     def validate_user(cls, v: dict[str, Any]) -> dict[str, Any]:
@@ -72,6 +101,8 @@ class User(BaseModel):
         v["password"] = hashlib.sha256(v["password"].encode()).hexdigest()
         return v
 
+# Enhanced validation function
+
 
 def validate(data: dict[str, Any]) -> None:
     try:
@@ -80,6 +111,8 @@ def validate(data: dict[str, Any]) -> None:
     except ValidationError as e:
         print("User is invalid:")
         print(e)
+
+# Main function with more test cases
 
 
 def main() -> None:

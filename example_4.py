@@ -9,6 +9,22 @@ from pydantic import BaseModel, EmailStr, Field, field_serializer, UUID4
 
 app = FastAPI()
 
+"""
+Key features and improvements in example_4.py:
+1. Integration with FastAPI: This example introduces a web API framework, demonstrating how to use Pydantic models in a real-world application context.
+2. UUID for user identification: Instead of using simple integers or strings, it uses UUID4 for unique user identification.
+3. More complex User model:
+- Includes fields for friends and blocked users (as lists of UUIDs).
+- Adds a signup timestamp.
+- Uses default_factory for default values.
+4. API endpoints:
+- GET /users to retrieve all users.
+- POST /users to create a new user.
+- GET /users/{user_id} to retrieve a specific user.
+5. Test client: Uses FastAPI's TestClient for API testing.
+6. In-memory storage: Uses a class variable __users__ to store User instances.
+"""
+
 
 class User(BaseModel):
     model_config = {
@@ -68,7 +84,8 @@ def main() -> None:
             assert response.json()["id"], "The user should have an id"
 
             user = User.model_validate(response.json())
-            assert str(user.id) == response.json()["id"], "The id should be the same"
+            assert str(user.id) == response.json()[
+                "id"], "The id should be the same"
             assert user.signup_ts, "The signup timestamp should be set"
             assert user.friends == [], "The friends list should be empty"
             assert user.blocked == [], "The blocked list should be empty"
@@ -87,7 +104,8 @@ def main() -> None:
         assert response.json()["id"], "The user should have an id"
 
         user = User.model_validate(response.json())
-        assert str(user.id) == response.json()["id"], "The id should be the same"
+        assert str(user.id) == response.json()[
+            "id"], "The id should be the same"
         assert user.signup_ts, "The signup timestamp should be set"
         assert user.friends == [], "The friends list should be empty"
         assert user.blocked == [], "The blocked list should be empty"
@@ -104,7 +122,8 @@ def main() -> None:
             response.json()["message"] == "User not found"
         ), "We technically should not find this user"
 
-        response = client.post("/users", json={"name": "User 6", "email": "wrong"})
+        response = client.post(
+            "/users", json={"name": "User 6", "email": "wrong"})
         assert response.status_code == 422, "The email address is should be invalid"
 
 
